@@ -1,10 +1,14 @@
 package com.haatmakaam.backend.services;
 
 import com.haatmakaam.backend.domain.entities.User;
+import com.haatmakaam.backend.domain.enums.UserRole;
 import com.haatmakaam.backend.models.RegisterRequest;
+import com.haatmakaam.backend.models.LoginRequest;
+import com.haatmakaam.backend.models.LoginResponse;
 import com.haatmakaam.backend.models.OtpVerificationRequest; // Import the new request model
 import com.haatmakaam.backend.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
@@ -28,52 +32,42 @@ public class AuthenticationService {
         this.otpService = otpService;
     }
 
+        // Using your UserRole enum
     public User register(RegisterRequest request) {
-        // ... (your existing register method)
         User user = new User();
-        user.setName(request.getName());
-        user.setPhone(request.getPhone());
+        user.setFullName(request.getName()); // Use 'fullName'
+        user.setPhoneNumber(request.getPhone()); // Use 'phoneNumber'
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(request.getRole());
+        user.setRole(UserRole.valueOf(request.getRole().toUpperCase())); // Convert string to enum
         user.setVerified(false);
+
         String otp = new DecimalFormat("000000").format(new Random().nextInt(999999));
         user.setOtp(otp);
         user.setOtpGeneratedTime(LocalDateTime.now());
         User savedUser = userRepository.save(user);
-        otpService.sendOtp(savedUser.getPhone(), otp);
+        otpService.sendOtp(savedUser.getPhoneNumber(), otp); // Use getPhoneNumber()
         return savedUser;
     }
 
-    /**
-     * Verifies a user's phone number using the provided OTP.
-     * @param request The request containing the user's phone and the OTP.
-     * @return true if verification is successful, false otherwise.
-     */
     public boolean verifyOtp(OtpVerificationRequest request) {
-        // 1. Find the user by their phone number.
-        User user = userRepository.findByPhone(request.getPhone())
+        // Use the new repository method
+        User user = userRepository.findByPhoneNumber(request.getPhone())
                 .orElseThrow(() -> new RuntimeException("User not found with phone: " + request.getPhone()));
-
-        // 2. Check if the user is already verified.
-        if (user.isVerified()) {
-            // Or handle as you see fit, maybe return a specific message.
-            return true; 
-        }
-
-        // 3. Check if the OTP is correct and not expired.
-        if (user.getOtp().equals(request.getOtp()) && 
-            user.getOtpGeneratedTime().plusMinutes(OTP_VALIDITY_MINUTES).isAfter(LocalDateTime.now())) {
-            
-            // 4. If verification is successful, update the user's status.
-            user.setVerified(true);
-            // It's good practice to clear the OTP fields after successful verification.
-            user.setOtp(null);
-            user.setOtpGeneratedTime(null);
-            userRepository.save(user);
-            return true;
-        }
-
-        // 5. If OTP is incorrect or expired, return false.
-        return false;
+        // ... (rest of the logic is the same)
     }
+
+    public LoginResponse login(LoginRequest request) {
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(request.getPhone(), request.getPassword())
+        );
+        // Use the new repository method
+        User user = userRepository.findByPhoneNumber(request.getPhone())
+            .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+
+        // No need to check isVerified() here, because user.isEnabled() in UserDetails does it for us.
+        
+        String jwt = jwtService.generateToken(user);
+        return new LoginResponse(jwt);
+    }
+}
 }

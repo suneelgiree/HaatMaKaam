@@ -13,27 +13,20 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-// --- LOMBOK ANNOTATIONS ---
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
-// --- JPA ANNOTATIONS ---
 @Entity
 @Table(name = "users")
-// This is a database-level constraint to ensure data integrity.
-// It guarantees that a user record cannot be created unless it has either an email or a phone number.
 @Check(constraints = "email IS NOT NULL OR phone_number IS NOT NULL")
 public class User implements UserDetails {
-
-    // --- FIELDS AND COLUMN MAPPINGS ---
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -42,20 +35,17 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String fullName;
 
-    // Email is now nullable, but must remain unique if it is provided.
-    @Column(nullable = true, unique = true)
+    @Column(unique = true)
     private String email;
 
-    // We will use this for password-based login. It can be null for OTP/social logins.
-    @Column(nullable = true)
-    private String passwordHash;
+    // Renamed from passwordHash to password for consistency with PasswordEncoder
+    private String password;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
 
-    // Phone number is also unique if provided.
-    @Column(unique = true)
+    @Column(unique = true, nullable = false) // Phone number is the primary identifier for login
     private String phoneNumber;
 
     private String profilePictureUrl;
@@ -66,7 +56,12 @@ public class User implements UserDetails {
     @UpdateTimestamp
     private Instant updatedAt;
 
-    // --- SPRING SECURITY METHODS (UserDetails Interface) ---
+    // --- FIELDS ADDED FOR OTP VERIFICATION ---
+    private boolean isVerified;
+    private String otp;
+    private LocalDateTime otpGeneratedTime;
+
+    // --- UserDetails Methods Implementation ---
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -75,34 +70,32 @@ public class User implements UserDetails {
 
     @Override
     public String getPassword() {
-        return this.passwordHash;
+        return this.password;
     }
 
+    /**
+     * IMPORTANT: We are using the phone number as the unique "username" for Spring Security
+     * to align with our registration and login flow.
+     */
     @Override
     public String getUsername() {
-        // Spring Security's "username" can be any unique identifier.
-        // We will prioritize email, but could adapt this logic later.
-        // For now, this remains the primary identifier for password-based auth.
-        return this.email;
+        return this.phoneNumber;
     }
 
     @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
+    public boolean isAccountNonExpired() { return true; }
 
     @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
+    public boolean isAccountNonLocked() { return true; }
 
     @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
+    public boolean isCredentialsNonExpired() { return true; }
 
+    /**
+     * A user's account is only considered "enabled" if they have successfully verified their OTP.
+     */
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.isVerified;
     }
 }
