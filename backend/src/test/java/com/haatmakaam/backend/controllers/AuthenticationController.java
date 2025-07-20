@@ -3,6 +3,8 @@ package com.haatmakaam.backend.controllers;
 import com.haatmakaam.backend.domain.entities.User;
 import com.haatmakaam.backend.models.OtpVerificationRequest;
 import com.haatmakaam.backend.models.RegisterRequest;
+import com.haatmakaam.backend.models.LoginRequest;
+import com.haatmakaam.backend.models.LoginResponse;
 import com.haatmakaam.backend.services.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -54,5 +56,16 @@ public class AuthenticationController {
         } else {
             return ResponseEntity.badRequest().body("Invalid or expired OTP.");
         }
+    }
+
+        /**
+     * Endpoint to handle user login.
+     * @param request The login request payload.
+     * @return A response containing the JWT on success.
+     */
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+        LoginResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
     }
 }
