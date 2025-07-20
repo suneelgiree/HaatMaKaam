@@ -13,54 +13,59 @@
 *   **Tech Stack:**
     *   **Frontend:** React.js (Next.js)
     *   **Backend:** Java (Spring Boot)
-    *   **Database:** PostgreSQL
-    *   **Authentication:** JWT-based auth + Google login
+    *   **Database:** PostgreSQL (via Supabase)
+    *   **Authentication:** JWT-based auth, Phone OTP, Social Login (Google, etc.)
+    *   **SMS Gateway:** Twilio
     *   **File Storage:** Firebase / Cloudinary for images (worker ID, certificates)
-    *   **Hosting:** Vercel (frontend), Render / Railway / Supabase (backend/db)
+    *   **Hosting:** Vercel (frontend), Railway / Render (backend), Supabase (database)
     *   **Realtime Chat:** Socket.IO or Firebase Realtime DB
 
 ### 2. 🛠️ DEVELOPMENT PHASE (WITH GIT INTEGRATION)
 
-*   **Phase 1: User & Worker Authentication System**
-    *   Features: Sign up/login, role selection, profile completion.
-*   **Phase 2: Worker Profile Creation**
+*   **Phase 1: User Registration & Email/Password Auth (`✅ COMPLETED`)**
+    *   Features: Sign up/login with email and password, role selection, secure password hashing.
+*   **Phase 2: Phone Number (OTP) Authentication (`IN PROGRESS`)**
+    *   Modify `User` entity to allow phone-only registration.
+    *   Integrate Twilio for sending SMS OTPs.
+    *   Create endpoints for requesting and verifying OTPs.
+*   **Phase 3: Worker Profile & Management**
     *   Fields: Skillset, Hourly rate, Experience, Location, Availability schedule.
-*   **Phase 3: Client Job Posting System**
-    *   Post job with: Description, Location (Google Maps integration optional), Required skill, Budget & time, Date & time window.
-*   **Phase 4: Job Matchmaking Algorithm**
-    *   Match workers based on: Location proximity, Availability, Skills match, Rating threshold.
-*   **Phase 5: Chat System (Worker <-> Client)**
-    *   Realtime chat feature with optional file/image sending.
-*   **Phase 6: Booking & Payment Flow**
-    *   Confirm job, manage booking status, and integrate payment flow (Cash / Khalti / eSewa).
-*   **Phase 7: Reviews & Ratings System**
+*   **Phase 4: Client Job Posting System**
+    *   Post job with: Description, Location (map integration), Required skill, Budget, Date & time window.
+*   **Phase 5: Job Matchmaking Algorithm**
+    *   Match workers based on: Location proximity, Availability, Skills, Rating.
+*   **Phase 6: Realtime Chat System (Worker <-> Client)**
+    *   Implement chat feature for job negotiation and coordination.
+*   **Phase 7: Booking & Payment Flow**
+    *   Confirm job, manage booking status (pending, confirmed, completed, cancelled).
+    *   Integrate a Nepali payment gateway (eSewa / Khalti).
+*   **Phase 8: Reviews & Ratings System**
     *   Allow both parties to review each other after job completion.
-*   **Phase 8: Admin Dashboard**
-    *   Manage users, block spammers, and moderate jobs.
+*   **Phase 9: Admin Dashboard**
+    *   Manage users, verify workers, block spammers, and moderate jobs.
 
 ### 🧩 OPTIONAL ADD-ONS (FOR LATER STAGES)
 
 *   AI-powered job suggestions
-*   Worker certification upload
-*   Push notifications (PWA or Firebase Cloud Messaging)
+*   Worker certification upload and verification
+*   Push notifications (Firebase Cloud Messaging)
 *   Booking cancellation & refund logic
-*   Nepali language translation toggle
 *   Dispute resolution system
-*   Subscription plan for premium workers
 *   GPS live tracking of hired workers
 *   Video call integration for remote jobs
 
 ### 🌍 NEPALI FLAVOR + LOCALIZATION
 
 *   Dual language support (English + Nepali)
-*   Integrate eSewa / Khalti as payment providers
-*   Highlight local workers in a "Nearby" tab
-*   Use NPR currency format
-*   Allow users to upload citizenship/ID card for verification
-*   Referral program (e.g., earn NPR 100 per signup)
+*   Integrate eSewa / Khalti as primary payment providers.
+*   Highlight local workers in a "Nearby" tab.
+*   Use NPR currency format.
+*   Allow users to upload citizenship/ID card for verification.
+*   Referral program (e.g., earn NPR 100 per signup).
 
 ### 🤖 DEPLOYMENT
 
 *   **Frontend:** Vercel for Next.js
-*   **Backend:** Supabase or Railway
-*   **CI/CD:** GitHub Actions
+*   **Backend:** Railway or Render
+*   **Database:** Supabase
+*   **CI/CD:** GitHub Actions to automate deployments.
