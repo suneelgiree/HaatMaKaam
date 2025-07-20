@@ -2,6 +2,7 @@ package com.haatmakaam.backend.services;
 
 import com.haatmakaam.backend.domain.entities.User;
 import com.haatmakaam.backend.models.RegisterRequest;
+import com.haatmakaam.backend.models.OtpVerificationRequest; // Import the new request model
 import com.haatmakaam.backend.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -10,25 +11,16 @@ import java.time.LocalDateTime;
 import java.util.Random;
 import java.text.DecimalFormat;
 
-/**
- * Service to handle user authentication, including registration and future login/verification logic.
- */
 @Service
 public class AuthenticationService {
 
-    // Dependency on the repository to interact with the User data in the database.
+    // Define OTP expiration time in minutes. 10 minutes is a reasonable duration.
+    private static final long OTP_VALIDITY_MINUTES = 10;
+
     private final UserRepository userRepository;
-    // Dependency on the password encoder to securely hash passwords.
     private final PasswordEncoder passwordEncoder;
-    // Dependency on the OtpService to send SMS messages.
     private final OtpService otpService;
 
-    /**
-     * Constructor-based dependency injection. Spring will provide instances of these beans.
-     * @param userRepository Repository for user data access.
-     * @param passwordEncoder Bean for hashing passwords.
-     * @param otpService Service for sending OTPs.
-     */
     @Autowired
     public AuthenticationService(UserRepository userRepository, PasswordEncoder passwordEncoder, OtpService otpService) {
         this.userRepository = userRepository;
@@ -36,41 +28,52 @@ public class AuthenticationService {
         this.otpService = otpService;
     }
 
-    /**
-     * Handles the registration of a new user.
-     * @param request The request object containing the new user's details.
-     * @return The User entity that was saved to the database.
-     */
     public User register(RegisterRequest request) {
-        // TODO: Add validation to check if a user with the given phone number already exists.
-
-        // Create a new User entity and populate it with data from the request.
+        // ... (your existing register method)
         User user = new User();
         user.setName(request.getName());
         user.setPhone(request.getPhone());
-        // Always encode the password before saving it to the database for security.
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
-        // A new user is not verified by default.
         user.setVerified(false);
-
-        // --- OTP Logic ---
-        // 1. Generate a random 6-digit OTP.
         String otp = new DecimalFormat("000000").format(new Random().nextInt(999999));
-
-        // 2. Set the generated OTP and the current timestamp on the user entity.
-        // This is necessary to verify the OTP and check if it has expired later.
         user.setOtp(otp);
         user.setOtpGeneratedTime(LocalDateTime.now());
-
-        // 3. Save the new user record to the database.
         User savedUser = userRepository.save(user);
-
-        // 4. After successfully saving the user, send the OTP to their phone.
-        // This ensures we don't send an SMS if there's a database issue.
         otpService.sendOtp(savedUser.getPhone(), otp);
-
-        // Return the saved user entity. The controller can then decide what response to send to the client.
         return savedUser;
+    }
+
+    /**
+     * Verifies a user's phone number using the provided OTP.
+     * @param request The request containing the user's phone and the OTP.
+     * @return true if verification is successful, false otherwise.
+     */
+    public boolean verifyOtp(OtpVerificationRequest request) {
+        // 1. Find the user by their phone number.
+        User user = userRepository.findByPhone(request.getPhone())
+                .orElseThrow(() -> new RuntimeException("User not found with phone: " + request.getPhone()));
+
+        // 2. Check if the user is already verified.
+        if (user.isVerified()) {
+            // Or handle as you see fit, maybe return a specific message.
+            return true; 
+        }
+
+        // 3. Check if the OTP is correct and not expired.
+        if (user.getOtp().equals(request.getOtp()) && 
+            user.getOtpGeneratedTime().plusMinutes(OTP_VALIDITY_MINUTES).isAfter(LocalDateTime.now())) {
+            
+            // 4. If verification is successful, update the user's status.
+            user.setVerified(true);
+            // It's good practice to clear the OTP fields after successful verification.
+            user.setOtp(null);
+            user.setOtpGeneratedTime(null);
+            userRepository.save(user);
+            return true;
+        }
+
+        // 5. If OTP is incorrect or expired, return false.
+        return false;
     }
 }

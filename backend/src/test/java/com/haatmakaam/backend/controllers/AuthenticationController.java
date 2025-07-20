@@ -1,6 +1,7 @@
 package com.haatmakaam.backend.controllers;
 
 import com.haatmakaam.backend.domain.entities.User;
+import com.haatmakaam.backend.models.OtpVerificationRequest;
 import com.haatmakaam.backend.models.RegisterRequest;
 import com.haatmakaam.backend.services.AuthenticationService;
 import lombok.RequiredArgsConstructor;
@@ -38,5 +39,20 @@ public class AuthenticationController {
         // Return the newly created user object with an HTTP status of 200 OK.
         // Later, we can return a DTO instead of the full User entity.
         return ResponseEntity.ok(registeredUser);
+    }
+
+     /**
+     * Endpoint to verify the user's OTP.
+     * @param request The request containing the phone number and OTP.
+     * @return A success or failure response.
+     */
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody OtpVerificationRequest request) {
+        boolean isVerified = authService.verifyOtp(request);
+        if (isVerified) {
+            return ResponseEntity.ok("Account verified successfully.");
+        } else {
+            return ResponseEntity.badRequest().body("Invalid or expired OTP.");
+        }
     }
 }
