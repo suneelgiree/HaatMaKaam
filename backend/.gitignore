@@ -1,6 +1,6 @@
 # Local application properties
 # Contains sensitive information like API keys and should not be versioned.
-src/main/resources/application.local.properties
+src/main/resources/application-local.properties
 
 # Other ignores
 HELP.md

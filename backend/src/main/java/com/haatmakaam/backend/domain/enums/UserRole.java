@@ -6,18 +6,6 @@ package com.haatmakaam.backend.domain.enums;
  * Using an enum ensures type safety, meaning you can't accidentally assign an invalid role.
  */
 public enum UserRole {
-    /**
-     * A client who posts jobs and hires workers.
-     */
-    CLIENT,
-
-    /**
-     * A skilled laborer who registers to find and perform jobs.
-     */
-    WORKER,
-
-    /**
-     * An administrator who can manage users, jobs, and the platform itself.
-     */
+   USER,
     ADMIN
 }

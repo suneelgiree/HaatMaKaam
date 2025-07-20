@@ -1,5 +1,5 @@
 // Specifies the package for service classes, which contain the core business logic of the application.
-package com.haatmakaam.backend.service;
+package com.haatmakaam.backend.services;
 
 // Imports the TwilioConfig class to get access to Twilio credentials.
 import com.haatmakaam.backend.config.TwilioConfig;
